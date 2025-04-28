@@ -18,6 +18,17 @@ const schema = yup.object({
     .email('Email không hợp lệ')
     .optional(),
   packageId: yup.number().required('Vui lòng chọn gói dịch vụ'),
+  paymentImage: yup
+    .mixed()
+    .required('Vui lòng tải lên ảnh chuyển khoản')
+    .test('fileSize', 'Kích thước file quá lớn', (value) => {
+      if (!value || !(value instanceof File)) return true;
+      return value.size <= 5000000; // 5MB
+    })
+    .test('fileType', 'Chỉ chấp nhận file ảnh', (value) => {
+      if (!value || !(value instanceof File)) return true;
+      return ['image/jpeg', 'image/png', 'image/jpg'].includes(value.type);
+    }),
 });
 
 type FormData = {
@@ -25,6 +36,7 @@ type FormData = {
   phoneNumber: string;
   email?: string;
   packageId: number;
+  paymentImage: File | null;
 };
 
 export default function RentalForm() {
@@ -32,6 +44,7 @@ export default function RentalForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submissionId, setSubmissionId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const {
     register,
@@ -40,7 +53,7 @@ export default function RentalForm() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
   });
 
   // Get packageId from query params
@@ -57,11 +70,17 @@ export default function RentalForm() {
   const onSubmit = async (data: FormData) => {
     try {
       setErrorMessage('');
-      const response = await API.createRental(data);
+      const formData = new FormData();
+      formData.append('customerName', data.customerName);
+      formData.append('phoneNumber', data.phoneNumber);
+      if (data.email) formData.append('email', data.email);
+      formData.append('packageId', data.packageId.toString());
+      formData.append('paymentImage', data.paymentImage as File);
+
+      const response = await API.createRental(formData);
       setSubmissionId(response.data.id);
       setIsSubmitted(true);
       
-      // Save to localStorage/sessionStorage for the payment step
       sessionStorage.setItem('rentalData', JSON.stringify({
         id: response.data.id,
         customerName: data.customerName,
@@ -71,7 +90,6 @@ export default function RentalForm() {
       console.error('Error submitting form:', error);
       setErrorMessage('Có lỗi xảy ra khi gửi thông tin. Vui lòng thử lại sau.');
       
-      // For demo purposes, we'll simulate a successful submission
       const mockId = Math.floor(Math.random() * 1000) + 1;
       setSubmissionId(mockId);
       setIsSubmitted(true);
@@ -157,6 +175,44 @@ export default function RentalForm() {
         />
         {errors.email && (
           <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="paymentImage" className="block text-gray-700 mb-1">
+          Ảnh chuyển khoản <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="paymentImage"
+          type="file"
+          accept="image/*"
+          {...register('paymentImage')}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setValue('paymentImage', file);
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                setPreviewImage(reader.result as string);
+              };
+              reader.readAsDataURL(file);
+            }
+          }}
+          className={`w-full p-2 border rounded-lg ${
+            errors.paymentImage ? 'border-red-500' : 'border-gray-300'
+          }`}
+        />
+        {errors.paymentImage && (
+          <p className="text-red-500 text-sm mt-1">{errors.paymentImage.message}</p>
+        )}
+        {previewImage && (
+          <div className="mt-2">
+            <img
+              src={previewImage}
+              alt="Ảnh chuyển khoản"
+              className="max-w-full h-auto rounded-lg border border-gray-200"
+            />
+          </div>
         )}
       </div>
       

@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, IsEmail, IsOptional, IsNumber } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateRentalDto {
   @IsNotEmpty()
@@ -14,6 +15,11 @@ export class CreateRentalDto {
   email?: string;
 
   @IsNotEmpty()
+  @Type(() => Number)
   @IsNumber()
   packageId: number;
+
+  @IsOptional()
+  @IsString()
+  paymentImage?: string;
 } 

@@ -22,6 +22,9 @@ export class Rental {
   @Column({ nullable: true })
   paymentReference: string; // Mã giao dịch
 
+  @Column({ nullable: true })
+  paymentImage: string; // Đường dẫn đến ảnh chuyển khoản
+
   @Column({ type: 'datetime' })
   startDate: Date;
 

@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Param, Put, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, ParseIntPipe, Query, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { RentalsService } from './rentals.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { UpdateRentalStatusDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('rentals')
 export class RentalsController {
@@ -34,7 +37,30 @@ export class RentalsController {
   }
 
   @Post()
-  create(@Body() createRentalDto: CreateRentalDto): Promise<Rental> {
+  @UseInterceptors(
+    FileInterceptor('paymentImage', {
+      storage: diskStorage({
+        destination: './uploads/payments',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+          return cb(new BadRequestException('Chỉ chấp nhận file ảnh (jpg, jpeg, png)'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  create(
+    @Body() createRentalDto: CreateRentalDto,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<Rental> {
+    if (file) {
+      createRentalDto.paymentImage = file.path;
+    }
     return this.rentalsService.create(createRentalDto);
   }
 
