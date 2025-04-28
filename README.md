@@ -2,6 +2,8 @@
 
 VietMap Share là nền tảng cho phép người dùng thuê tài khoản VietMap Live theo ngày với giá cả phải chăng. Đây là giải pháp lý tưởng cho những cá nhân tự do có nhu cầu sử dụng dịch vụ theo dõi GPS tạm thời.
 
+![image](image.png)
+
 ## Tính năng chính
 
 - Thuê tài khoản VietMap Live theo ngày (1/3/7 ngày)
