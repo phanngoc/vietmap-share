@@ -45,6 +45,7 @@ export default function RentalForm() {
   const [submissionId, setSubmissionId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const {
     register,
@@ -75,7 +76,22 @@ export default function RentalForm() {
       formData.append('phoneNumber', data.phoneNumber);
       if (data.email) formData.append('email', data.email);
       formData.append('packageId', data.packageId.toString());
-      formData.append('paymentImage', data.paymentImage as File);
+      
+      // Lấy file từ input
+      const fileInput = selectedFile;
+      console.log('File input:', fileInput);
+      
+      if (fileInput) {
+        console.log('File to upload:', fileInput);
+        formData.append('paymentImage', fileInput);
+      } else {
+        console.log('No file selected');
+      }
+
+      // Log form data
+      for (const pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
 
       const response = await API.createRental(formData);
       setSubmissionId(response.data.id);
@@ -113,7 +129,7 @@ export default function RentalForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" encType="multipart/form-data">
       {errorMessage && (
         <div className="p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
           {errorMessage}
@@ -186,18 +202,21 @@ export default function RentalForm() {
           id="paymentImage"
           type="file"
           accept="image/*"
-          {...register('paymentImage')}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              setValue('paymentImage', file);
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                setPreviewImage(reader.result as string);
-              };
-              reader.readAsDataURL(file);
+          {...register('paymentImage', {
+            onChange: (e) => {
+              const file = e.target.files?.[0];
+              console.log('File selected:', file);
+              if (file) {
+                setSelectedFile(file);
+                setValue('paymentImage', file);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setPreviewImage(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              }
             }
-          }}
+          })}
           className={`w-full p-2 border rounded-lg ${
             errors.paymentImage ? 'border-red-500' : 'border-gray-300'
           }`}

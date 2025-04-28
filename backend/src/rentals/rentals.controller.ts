@@ -58,6 +58,7 @@ export class RentalsController {
     @Body() createRentalDto: CreateRentalDto,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<Rental> {
+    console.log('file.path', file);
     if (file) {
       createRentalDto.paymentImage = file.path;
     }

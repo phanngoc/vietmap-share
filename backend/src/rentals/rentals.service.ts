@@ -66,6 +66,7 @@ export class RentalsService {
       endDate,
       package: packageEntity,
       account: availableAccount,
+      paymentImage: createRentalDto.paymentImage,
     });
 
     return this.rentalRepository.save(newRental);

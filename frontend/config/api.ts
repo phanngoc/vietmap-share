@@ -18,7 +18,11 @@ export const API = {
   getPackage: (id: number) => apiClient.get(`/packages/${id}`),
   
   // Rentals
-  createRental: (data: any) => apiClient.post('/rentals', data),
+  createRental: (data: FormData) => apiClient.post('/rentals', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
   getRental: (id: number) => apiClient.get(`/rentals/${id}`),
   updateRentalPayment: (id: number, data: any) => apiClient.put(`/rentals/${id}/payment`, data),
   
